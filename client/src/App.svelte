@@ -1,7 +1,5 @@
 <script lang="ts">
-  const handleLogin = () => {
-    window.location.href = "http://localhost:3000/auth/google"
-  }
+  import Login from "./lib/login.svelte";
 </script>
 
 <main> 
@@ -10,11 +8,7 @@
     super Logo
   </div>
 
-  <div>
-    <button onclick={handleLogin}>
-      Login With Google
-    </button>
-  </div>
+  <Login />
 
   <div>
     <input type="text" placeholder="Search" />
