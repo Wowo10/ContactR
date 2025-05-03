@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/gob"
 	"fmt"
 	"log"
 	"net/http"
@@ -10,6 +11,7 @@ import (
 	"time"
 
 	"Auth/internal/auth"
+	"Auth/internal/database"
 	"Auth/internal/server"
 )
 
@@ -32,6 +34,12 @@ func gracefulShutdown(apiServer *http.Server, done chan bool) {
 		log.Printf("Server forced to shutdown with error: %v", err)
 	}
 
+	if err := database.New().Close(); err != nil {
+		log.Printf("Error closing database: %v", err)
+	} else {
+		log.Println("Database connection closed")
+	}
+
 	log.Println("Server exiting")
 
 	// Notify the main goroutine that the shutdown is complete
@@ -39,6 +47,7 @@ func gracefulShutdown(apiServer *http.Server, done chan bool) {
 }
 
 func main() {
+	gob.Register(time.Time{})
 
 	auth.NewAuth()
 	server := server.NewServer()

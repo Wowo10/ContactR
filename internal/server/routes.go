@@ -1,17 +1,21 @@
 package server
 
 import (
+	"Auth/internal/database"
 	"context"
 	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
+	"time"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
 	"github.com/markbates/goth/gothic"
 )
+
+const REFRESH_POLL_INTERVAL = 15
 
 func (s *Server) RegisterRoutes() http.Handler {
 	r := chi.NewRouter()
@@ -65,9 +69,20 @@ func (s *Server) getAuthCallbackFunction(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
+	dbService := database.New()
+
+	isValid, isAdmin, err := dbService.CheckUser(user.Email)
+	if err != nil {
+		http.Error(w, "Error checking user", http.StatusUnauthorized)
+		return
+	}
+
 	session, _ := s.sessionStore.Get(r, "auth-session")
 	session.Values["user_id"] = user.UserID
 	session.Values["user_email"] = user.Email
+	session.Values["is_valid"] = isValid
+	session.Values["is_admin"] = isAdmin
+	session.Values["cached_at"] = time.Now()
 	session.Save(r, w)
 
 	http.Redirect(w, r, "http://localhost:5173", http.StatusFound)
@@ -76,8 +91,32 @@ func (s *Server) getAuthCallbackFunction(w http.ResponseWriter, r *http.Request)
 func (s *Server) AuthMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		session, _ := s.sessionStore.Get(r, "auth-session")
+
+		cachedAt, _ := session.Values["cached_at"].(time.Time)
+		email, _ := session.Values["cached_at"].(string)
+
+		if time.Since(cachedAt) > REFRESH_POLL_INTERVAL*time.Minute {
+			dbService := database.New()
+
+			isValid, isAdmin, err := dbService.CheckUser(email)
+			if err != nil {
+				http.Error(w, "Error checking user", http.StatusUnauthorized)
+				return
+			}
+			session.Values["is_valid"] = isValid
+			session.Values["is_admin"] = isAdmin
+			session.Values["cached_at"] = time.Now()
+			session.Save(r, w)
+		}
+
+		if !session.Values["is_valid"].(bool) {
+			http.Error(w, "Access denied", http.StatusForbidden)
+			return
+		}
+
 		if session.Values["user_id"] == nil {
-			http.Redirect(w, r, "/login", http.StatusFound)
+			http.Error(w, "Access denied", http.StatusForbidden)
+			// http.Redirect(w, r, "/login", http.StatusFound)
 			return
 		}
 		next.ServeHTTP(w, r)
@@ -95,15 +134,18 @@ func (s *Server) meHandler(w http.ResponseWriter, r *http.Request) {
 	session, _ := s.sessionStore.Get(r, "auth-session")
 	userID, ok := session.Values["user_id"].(string)
 	userEmail, _ := session.Values["user_email"].(string)
+	isValid, _ := session.Values["is_valid"].(string)
+	isAdmin, _ := session.Values["is_admin"].(string)
 
 	if !ok || userID == "" {
 		http.Error(w, "Not logged in", http.StatusUnauthorized)
 		return
 	}
 
-	// Optionally: fetch user details from DB
 	json.NewEncoder(w).Encode(map[string]string{
 		"user_id":    userID,
 		"user_email": userEmail,
+		"is_valid":   fmt.Sprintf("%v", isValid),
+		"is_admin":   fmt.Sprintf("%v", isAdmin),
 	})
 }
