@@ -1,6 +1,7 @@
 package database
 
 import (
+	"Auth/internal/models"
 	"context"
 	"database/sql"
 	"fmt"
@@ -17,6 +18,10 @@ type Service interface {
 	Health() map[string]string
 	Close() error
 	CheckUser(email string) (isValid bool, isAdmin bool, err error)
+	GetUsers() (users []models.User, err error)
+	CreateUser(user models.User) (err error)
+	EditUser(user models.User) (err error)
+	DeleteUser(id string) (err error)
 }
 
 type service struct {
@@ -125,6 +130,88 @@ func (s *service) CheckUser(email string) (isValid bool, isAdmin bool, err error
 		}
 
 		return validTo.After(time.Now()), admin, nil
+	}
+
+	return
+}
+
+func (s *service) GetUsers() (users []models.User, err error) {
+	rows, err := s.db.Query("SELECT * FROM users")
+	defer rows.Close()
+
+	if err != nil {
+		return
+	}
+
+	for rows.Next() {
+		var id int
+		var name string
+		var email string
+		var validTo time.Time
+		var admin bool
+		err = rows.Scan(&id, &name, &email, &validTo, &admin)
+
+		if err != nil {
+			return
+		}
+
+		users = append(users, models.User{
+			Id:         id,
+			Name:       name,
+			Email:      email,
+			ValidUntil: validTo,
+			IsValid:    validTo.After(time.Now()),
+			IsAdmin:    admin,
+		})
+	}
+
+	return users, nil
+}
+
+func (s *service) CreateUser(user models.User) (err error) {
+	res, err := s.db.Exec("Insert INTO users (name, email, validTo, admin) VALUES ($1, $2, $3, $4)", user.Name, user.Email, user.ValidUntil, user.IsAdmin)
+	if err != nil {
+		return
+	}
+
+	rowsAffected, err := res.RowsAffected()
+	if err != nil {
+		return
+	}
+	if rowsAffected == 0 {
+		return fmt.Errorf("Couldn`t create user with email %s", user.Email)
+	}
+	return
+}
+
+func (s *service) EditUser(user models.User) (err error) {
+	res, err := s.db.Exec("UPDATE users SET name = $2, email = $3, validTo = $4, admin = $5 WHERE id = $1", user.Id, user.Name, user.Email, user.ValidUntil, user.IsAdmin)
+	if err != nil {
+		return
+	}
+
+	rowsAffected, err := res.RowsAffected()
+	if err != nil {
+		return
+	}
+	if rowsAffected == 0 {
+		return fmt.Errorf("no user deleted with id %d", user.Id)
+	}
+	return
+}
+
+func (s *service) DeleteUser(id string) (err error) {
+	res, err := s.db.Exec("DELETE FROM users WHERE id = $1", id)
+	if err != nil {
+		return
+	}
+
+	rowsAffected, err := res.RowsAffected()
+	if err != nil {
+		return
+	}
+	if rowsAffected == 0 {
+		return fmt.Errorf("no user deleted with id %s", id)
 	}
 
 	return

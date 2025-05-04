@@ -1,20 +1,26 @@
 <script lang="ts">
-  import Login from './lib/login.svelte';
+  import Login from "./lib/login.svelte";
+  import Router from "./lib/router.svelte";
+
+  import type { User } from "./lib/models/user";
+
+  let user: User | null = null;
 </script>
 
 <main>
   <div>super Logo</div>
 
-  <Login />
+  <Login bind:user />
 
-  <div>
-    <input type="text" placeholder="Search" />
-    <label><input type="checkbox" />all</label>
-    <!-- make nice style toggle all/any-->
-  </div>
+  {JSON.stringify(user)}
 
-  <div id="results">results</div>
+  {#if user}
+    {#if user.is_valid}
+      <Router {user} />
+    {:else}
+      <p>Access denied</p>
+    {/if}
+  {:else}
+    <p>Waiting for login...</p>
+  {/if}
 </main>
-
-<style>
-</style>

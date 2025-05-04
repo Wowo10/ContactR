@@ -1,47 +1,41 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
-  import type { Writable } from 'svelte/store';
-  import { writable } from 'svelte/store';
+  import { onMount } from "svelte";
+  import type { User } from "./models/user";
 
-  interface User {
-    user_email: string;
-  }
-
-  export const user: Writable<User | null> = writable(null);
+  export let user: User | null = null;
 
   onMount(async () => {
     try {
-      const res = await fetch('/api/me', {
-        credentials: 'include',
+      const res = await fetch("/api/me", {
+        credentials: "include",
       });
 
       if (res.ok) {
-        const data = await res.json();
-        user.set(data);
+        user = await res.json();
       } else {
-        user.set(null);
+        user = null;
       }
     } catch (e) {
-      console.error('Failed to fetch user:', e);
-      user.set(null);
+      console.error("Failed to fetch user:", e);
+      user = null;
     }
   });
 
   const handleLogin = () => {
-    window.location.href = 'auth/google';
+    window.location.href = "auth/google";
   };
 
-  async function logout() {
-    await fetch('/auth/logout', {
-      credentials: 'include',
+  const logout = async () => {
+    await fetch("/auth/logout", {
+      credentials: "include",
     });
-    user.set(null);
-  }
+    user = null;
+  };
 </script>
 
 <div>
-  {#if $user}
-    {$user.user_email}
+  {#if user}
+    {user.user_email}
     <button onclick={logout}>Logout</button>
   {:else}
     <button onclick={handleLogin}> Login With Google </button>

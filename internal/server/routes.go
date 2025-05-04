@@ -2,6 +2,7 @@ package server
 
 import (
 	"Auth/internal/database"
+	"Auth/internal/models"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -30,6 +31,10 @@ func (s *Server) RegisterRoutes() http.Handler {
 	}))
 
 	r.Get("/api/me", s.meHandler)
+	r.Get("/api/users", s.usersHandler)
+	r.Put("/api/users", s.putUsersHandler)
+	r.Post("/api/users", s.postUsersHandler)
+	r.Delete("/api/users/{id}", s.deleteUsersHandler)
 
 	r.Get("/", s.HelloWorldHandler)
 	r.Get("/health", s.healthHandler)
@@ -134,8 +139,8 @@ func (s *Server) meHandler(w http.ResponseWriter, r *http.Request) {
 	session, _ := s.sessionStore.Get(r, "auth-session")
 	userID, ok := session.Values["user_id"].(string)
 	userEmail, _ := session.Values["user_email"].(string)
-	isValid, _ := session.Values["is_valid"].(string)
-	isAdmin, _ := session.Values["is_admin"].(string)
+	isValid, _ := session.Values["is_valid"].(bool)
+	isAdmin, _ := session.Values["is_admin"].(bool)
 
 	if !ok || userID == "" {
 		http.Error(w, "Not logged in", http.StatusUnauthorized)
@@ -148,4 +153,59 @@ func (s *Server) meHandler(w http.ResponseWriter, r *http.Request) {
 		"is_valid":   fmt.Sprintf("%v", isValid),
 		"is_admin":   fmt.Sprintf("%v", isAdmin),
 	})
+}
+
+func (s *Server) usersHandler(w http.ResponseWriter, r *http.Request) {
+	users, err := s.db.GetUsers()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	json.NewEncoder(w).Encode(users)
+}
+
+func (s *Server) putUsersHandler(w http.ResponseWriter, r *http.Request) {
+	var user models.User
+	err := json.NewDecoder(r.Body).Decode(&user)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	err = s.db.EditUser(user)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+}
+
+func (s *Server) postUsersHandler(w http.ResponseWriter, r *http.Request) {
+	var user models.User
+	err := json.NewDecoder(r.Body).Decode(&user)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	err = s.db.CreateUser(user)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+}
+
+func (s *Server) deleteUsersHandler(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+	err := s.db.DeleteUser(id)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
 }
