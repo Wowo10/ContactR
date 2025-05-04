@@ -5,6 +5,7 @@
 
     type UserWithEdit = User & { edit: boolean };
     let users: UserWithEdit[] = [];
+    let addVisible = false;
     let addUserData = {
         name: "",
         email: "",
@@ -15,6 +16,10 @@
     };
 
     onMount(async () => {
+        getUsers();
+    });
+
+    const getUsers = async () => {
         try {
             const res = await fetch("/api/users", {
                 credentials: "include",
@@ -29,9 +34,14 @@
             console.error("Failed to fetch user:", e);
             users = [];
         }
-    });
+    };
 
     const editUser = async (user: UserWithEdit) => {
+        if (!user.email || !user.valid_until) {
+            getUsers();
+            return;
+        }
+
         const res = await fetch("/api/users", {
             method: "PUT",
             credentials: "include",
@@ -54,6 +64,10 @@
     };
 
     const addUser = async () => {
+        if (!addUserData.email || !addUserData.valid_until) {
+            return;
+        }
+
         const res = await fetch("/api/users", {
             method: "POST",
             credentials: "include",
@@ -125,7 +139,10 @@
                 </td>
                 <td>
                     {#if user.edit}
-                        <input type="text" bind:value={user.valid_until} />
+                        <input
+                            type="text"
+                            bind:value={user.valid_until}
+                        />
                     {:else}
                         {user.valid_until}
                     {/if}
@@ -151,7 +168,7 @@
                             user.edit = !user.edit;
                         }}
                         label="Edit"
-                        timeout={9999999999}
+                        timeout={0}
                     />
                 </td>
                 <td>
@@ -163,24 +180,56 @@
             </tr>
         {/each}
         <tr>
-            <!-- todo: make visible on confirm -->
             <td></td>
             <td>
-                <input type="text" bind:value={addUserData.name} />
+                <input
+                    type="text"
+                    bind:value={addUserData.name}
+                    class:hide={!addVisible}
+                />
             </td>
             <td>
-                <input type="text" bind:value={addUserData.email} />
+                <input
+                    type="text"
+                    bind:value={addUserData.email}
+                    class:hide={!addVisible}
+                />
             </td>
             <td>
-                <input type="text" bind:value={addUserData.valid_until} />
+                <!-- todo: a datepicker would be nice -->
+                <input
+                    type="text"
+                    bind:value={addUserData.valid_until}
+                    class:hide={!addVisible}
+                />
             </td>
             <td>
-                <input type="checkbox" bind:checked={addUserData.is_admin} />
+                <input
+                    type="checkbox"
+                    bind:checked={addUserData.is_admin}
+                    class:hide={!addVisible}
+                />
             </td>
             <td>
-                <ConfirmButton onConfirm={() => addUser()} label="Add" />
+                <ConfirmButton
+                    onConfirm={() => addUser()}
+                    activateCallback={() => {
+                        addVisible = true;
+                    }}
+                    dectivateCallback={() => {
+                        addVisible = false;
+                    }}
+                    label="Add"
+                    timeout={0}
+                />
             </td>
             <td></td>
         </tr>
     </tbody>
 </table>
+
+<style>
+    .hide {
+        display: none;
+    }
+</style>

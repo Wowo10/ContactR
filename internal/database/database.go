@@ -136,7 +136,7 @@ func (s *service) CheckUser(email string) (isValid bool, isAdmin bool, err error
 }
 
 func (s *service) GetUsers() (users []models.User, err error) {
-	rows, err := s.db.Query("SELECT * FROM users")
+	rows, err := s.db.Query("SELECT * FROM users ORDER BY Id")
 	defer rows.Close()
 
 	if err != nil {

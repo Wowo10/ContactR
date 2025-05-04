@@ -15,12 +15,14 @@
                 activateCallback();
             }
             confirming = true;
-            timer = setTimeout(() => {
-                if (dectivateCallback) {
-                    dectivateCallback();
-                }
-                confirming = false;
-            }, timeout);
+            if (timeout > 0) {
+                timer = setTimeout(() => {
+                    if (dectivateCallback) {
+                        dectivateCallback();
+                    }
+                    confirming = false;
+                }, timeout);
+            }
         } else {
             if (dectivateCallback) {
                 dectivateCallback();
