@@ -5,6 +5,14 @@
 
     type UserWithEdit = User & { edit: boolean };
     let users: UserWithEdit[] = [];
+    let addUserData = {
+        name: "",
+        email: "",
+        valid_until: new Date(
+            Date.now() + 1000 * 60 * 60 * 24 * 365,
+        ).toISOString(),
+        is_admin: false,
+    };
 
     onMount(async () => {
         try {
@@ -43,6 +51,30 @@
             }
             return u;
         });
+    };
+
+    const addUser = async () => {
+        const res = await fetch("/api/users", {
+            method: "POST",
+            credentials: "include",
+            body: JSON.stringify(addUserData),
+        });
+
+        if (!res.ok) {
+            console.error("Failed to modify user:", await res.text());
+            return;
+        }
+
+        addUserData.name = "";
+        addUserData.email = "";
+        addUserData.valid_until = new Date(
+            Date.now() + 1000 * 60 * 60 * 24 * 365,
+        ).toISOString();
+        addUserData.is_admin = false;
+
+        let newUser = await res.json();
+        newUser.edit = false;
+        users = [...users, newUser];
     };
 
     const deleteUser = async (id: string) => {
@@ -130,5 +162,25 @@
                 </td>
             </tr>
         {/each}
+        <tr>
+            <!-- todo: make visible on confirm -->
+            <td></td>
+            <td>
+                <input type="text" bind:value={addUserData.name} />
+            </td>
+            <td>
+                <input type="text" bind:value={addUserData.email} />
+            </td>
+            <td>
+                <input type="text" bind:value={addUserData.valid_until} />
+            </td>
+            <td>
+                <input type="checkbox" bind:checked={addUserData.is_admin} />
+            </td>
+            <td>
+                <ConfirmButton onConfirm={() => addUser()} label="Add" />
+            </td>
+            <td></td>
+        </tr>
     </tbody>
 </table>

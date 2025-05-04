@@ -142,6 +142,7 @@ func (s *Server) meHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]any{
 		"user_id":    userID,
 		"user_email": userEmail,
@@ -185,13 +186,15 @@ func (s *Server) postUsersHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = s.db.CreateUser(user)
+	user, err = s.db.CreateUser(user)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	w.WriteHeader(http.StatusNoContent)
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated)
+	json.NewEncoder(w).Encode(user)
 }
 
 func (s *Server) deleteUsersHandler(w http.ResponseWriter, r *http.Request) {

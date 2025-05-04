@@ -1,8 +1,8 @@
 <script lang="ts">
   import { onMount } from "svelte";
-  import type { User } from "./models/user";
+  import type { LoginData } from "./models/user";
 
-  export let user: User | null = null;
+  export let user: LoginData | null = null;
 
   onMount(async () => {
     try {
