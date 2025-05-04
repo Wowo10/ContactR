@@ -1,7 +1,7 @@
 package database
 
 import (
-	"Auth/internal/models"
+	"Contacter/internal/models"
 	"context"
 	"database/sql"
 	"fmt"
@@ -39,7 +39,6 @@ var (
 )
 
 func New() Service {
-	// Reuse Connection
 	if dbInstance != nil {
 		return dbInstance
 	}

@@ -1,8 +1,8 @@
 package server
 
 import (
-	"Auth/internal/database"
-	"Auth/internal/models"
+	"Contacter/internal/database"
+	"Contacter/internal/models"
 	"context"
 	"encoding/json"
 	"fmt"

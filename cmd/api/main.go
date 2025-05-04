@@ -10,9 +10,9 @@ import (
 	"syscall"
 	"time"
 
-	"Auth/internal/auth"
-	"Auth/internal/database"
-	"Auth/internal/server"
+	"Contacter/internal/auth"
+	"Contacter/internal/database"
+	"Contacter/internal/server"
 )
 
 func gracefulShutdown(apiServer *http.Server, done chan bool) {

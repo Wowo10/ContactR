@@ -1,4 +1,4 @@
-module Auth
+module Contacter
 
 go 1.24.2
 

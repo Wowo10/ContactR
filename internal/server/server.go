@@ -10,7 +10,7 @@ import (
 	"github.com/gorilla/sessions"
 	_ "github.com/joho/godotenv/autoload"
 
-	"Auth/internal/database"
+	"Contacter/internal/database"
 )
 
 type Server struct {
@@ -26,7 +26,7 @@ func NewServer() *http.Server {
 		port: port,
 
 		db:           database.New(),
-		sessionStore: sessions.NewCookieStore([]byte("super-secret-key")), // TODO: Change this
+		sessionStore: sessions.NewCookieStore([]byte(os.Getenv("SESSION_STORE"))),
 	}
 
 	// Declare Server config
