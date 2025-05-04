@@ -30,32 +30,27 @@ func (s *Server) RegisterRoutes() http.Handler {
 		MaxAge:           300,
 	}))
 
-	r.Get("/api/me", s.meHandler)
-	r.Get("/api/users", s.usersHandler)
-	r.Put("/api/users", s.putUsersHandler)
-	r.Post("/api/users", s.postUsersHandler)
-	r.Delete("/api/users/{id}", s.deleteUsersHandler)
+	r.Route("/api", func(api chi.Router) {
+		api.Use(s.AuthMiddleware)
 
-	r.Get("/", s.HelloWorldHandler)
-	r.Get("/health", s.healthHandler)
+		api.Get("/me", s.meHandler)
+		api.Get("/users", s.usersHandler)
+		api.Put("/users", s.putUsersHandler)
+		api.Post("/users", s.postUsersHandler)
+		api.Delete("/users/{id}", s.deleteUsersHandler)
+	})
+
+	r.Route("/health", func(api chi.Router) {
+		api.Use(s.AuthMiddleware)
+
+		r.Get("/", s.healthHandler)
+	})
 
 	r.Get("/auth/{provider}/callback", s.getAuthCallbackFunction)
 	r.Get("/auth/{provider}", gothic.BeginAuthHandler)
 	r.Get("/auth/logout", s.logoutHandler)
 
 	return r
-}
-
-func (s *Server) HelloWorldHandler(w http.ResponseWriter, r *http.Request) {
-	resp := make(map[string]string)
-	resp["message"] = "Hello World"
-
-	jsonResp, err := json.Marshal(resp)
-	if err != nil {
-		log.Fatalf("error handling JSON marshal. Err: %v", err)
-	}
-
-	_, _ = w.Write(jsonResp)
 }
 
 func (s *Server) healthHandler(w http.ResponseWriter, r *http.Request) {
@@ -147,11 +142,11 @@ func (s *Server) meHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	json.NewEncoder(w).Encode(map[string]string{
+	json.NewEncoder(w).Encode(map[string]any{
 		"user_id":    userID,
 		"user_email": userEmail,
-		"is_valid":   fmt.Sprintf("%v", isValid),
-		"is_admin":   fmt.Sprintf("%v", isAdmin),
+		"is_valid":   isValid,
+		"is_admin":   isAdmin,
 	})
 }
 
