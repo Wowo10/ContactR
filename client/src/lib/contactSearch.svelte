@@ -1,8 +1,9 @@
 <script lang="ts">
     import { onMount } from "svelte";
     import type { Contact } from "./models/contact";
+    import { PAGE_SIZE } from "./common/constants";
     onMount(async () => {
-        getUsers();
+        getContacts();
     });
 
     type ContactWithEdit = Contact & { edit: boolean };
@@ -10,8 +11,9 @@
 
     let search = "";
     let all = false;
+    let pages = 0;
 
-    const getUsers = async (
+    const getContacts = async (
         search: string = "",
         all: boolean = false,
         page: number = 0,
@@ -32,6 +34,7 @@
             if (res.ok) {
                 const response = await res.json();
                 contacts = response.contacts;
+                pages = Math.ceil(response.count / PAGE_SIZE);
             } else {
                 contacts = [];
             }
@@ -45,7 +48,7 @@
 <div>
     <input type="text" placeholder="Search" bind:value={search} />
     <label><input type="checkbox" bind:checked={all} />all</label>
-    <button on:click={() => getUsers(search, all)}>Search</button>
+    <button on:click={() => getContacts(search, all)}>Search</button>
     <!-- make nice style toggle all/any-->
 </div>
 
@@ -73,3 +76,10 @@
         {/each}
     </tbody>
 </table>
+{#if pages > 1}
+    <div class="pagination">
+        {#each Array(pages) as _, i}
+            <button on:click={() => getContacts(search, all, i)}>{i}</button>
+        {/each}
+    </div>
+{/if}

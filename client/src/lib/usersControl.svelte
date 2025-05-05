@@ -1,6 +1,7 @@
 <script lang="ts">
     import { onMount } from "svelte";
     import type { User } from "./models/user";
+    import { PAGE_SIZE } from "./common/constants";
     import ConfirmButton from "./common/ConfirmButton.svelte";
 
     type UserWithEdit = User & { edit: boolean };
@@ -14,6 +15,7 @@
         ).toISOString(),
         is_admin: false,
     };
+    let pages = 0;
 
     onMount(async () => {
         getUsers();
@@ -28,6 +30,7 @@
             if (res.ok) {
                 const response = await res.json();
                 users = response.users;
+                pages = Math.ceil(response.count / PAGE_SIZE);
             } else {
                 users = [];
             }
@@ -225,6 +228,13 @@
         </tr>
     </tbody>
 </table>
+{#if pages > 1}
+    <div class="pagination">
+        {#each Array(pages) as _, i}
+            <button on:click={() => getUsers(i)}>{i}</button>
+        {/each}
+    </div>
+{/if}
 
 <style>
     .hide {
