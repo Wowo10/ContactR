@@ -14,16 +14,18 @@ import (
 	_ "github.com/joho/godotenv/autoload"
 )
 
+const PAGE_SIZE = 50
+
 type Service interface {
 	Health() map[string]string
 	Close() error
 	CheckUser(email string) (isValid bool, isAdmin bool, err error)
-	GetUsers() (users []models.User, err error)
+	GetUsers(page int) (users []models.User, count int, err error)
 	CreateUser(user models.User) (models.User, error)
 	EditUser(user models.User) (err error)
 	DeleteUser(id string) (err error)
 
-	GetContacts() (contacts []models.Contact, err error)
+	GetContacts(search string, matchAll bool, page int) (contacts []models.Contact, count int, err error)
 	CreateContact(contact models.Contact) (models.Contact, error)
 	EditContact(contact models.Contact) (err error)
 	DeleteContact(id string) (err error)

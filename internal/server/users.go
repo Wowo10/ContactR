@@ -4,18 +4,32 @@ import (
 	"Contacter/internal/models"
 	"encoding/json"
 	"net/http"
+	"strconv"
 
 	"github.com/go-chi/chi/v5"
 )
 
 func (s *Server) getUsersHandler(w http.ResponseWriter, r *http.Request) {
-	users, err := s.db.GetUsers()
+	pageStr := r.URL.Query().Get("page")
+	page := 0
+	if pageStr != "" {
+		page, _ = strconv.Atoi(pageStr)
+	}
+
+	users, count, err := s.db.GetUsers(page)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	json.NewEncoder(w).Encode(users)
+	resp := struct {
+		Users []models.User `json:"users"`
+		Count int           `json:"count"`
+	}{
+		Users: users,
+		Count: count,
+	}
+	json.NewEncoder(w).Encode(resp)
 }
 
 func (s *Server) putUsersHandler(w http.ResponseWriter, r *http.Request) {

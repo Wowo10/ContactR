@@ -31,8 +31,19 @@ func (s *service) CheckUser(email string) (isValid bool, isAdmin bool, err error
 	return
 }
 
-func (s *service) GetUsers() (users []models.User, err error) {
-	rows, err := s.db.Query("SELECT * FROM users ORDER BY Id")
+func (s *service) GetUsers(page int) (users []models.User, count int, err error) {
+	err = s.db.QueryRow("SELECT COUNT(*) FROM users").Scan(&count)
+	if err != nil {
+		return
+	}
+
+	rows, err := s.db.Query(`
+		SELECT * 
+		FROM users 
+		ORDER BY Id 
+		LIMIT $1 OFFSET $2
+	`, PAGE_SIZE, page*PAGE_SIZE)
+
 	defer rows.Close()
 
 	if err != nil {
@@ -61,7 +72,7 @@ func (s *service) GetUsers() (users []models.User, err error) {
 		})
 	}
 
-	return users, nil
+	return
 }
 
 func (s *service) CreateUser(user models.User) (models.User, error) {

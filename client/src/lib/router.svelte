@@ -1,14 +1,14 @@
 <script lang="ts">
-    import Search from "./search.svelte";
+    import ContactSearch from "./contactSearch.svelte";
     import UsersControl from "./usersControl.svelte";
     import type { LoginData } from "./models/user";
 
     export let logged: LoginData | null = null;
 
-    let route = "search";
+    let route = "contactSearch";
 
-    const routes: Record<string, typeof Search | typeof UsersControl> = {
-        search: Search,
+    const routes: Record<string, typeof ContactSearch | typeof UsersControl> = {
+        contactSearch: ContactSearch,
         usersControl: UsersControl,
     };
 
@@ -23,8 +23,8 @@
 {#if logged?.is_admin}
     <nav>
         <button
-            on:click={() => navigate("search")}
-            class:active={route === "search"}
+            on:click={() => navigate("contactSearch")}
+            class:active={route === "contactSearch"}
         >
             Search
         </button>

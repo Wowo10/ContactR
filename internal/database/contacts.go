@@ -4,60 +4,84 @@ import (
 	"Contacter/internal/models"
 	"database/sql"
 	"fmt"
-	"time"
+	"strings"
 
 	"github.com/lib/pq"
 )
 
-func (s *service) GetContacts() (contacts []models.Contact, err error) {
-	rows, err := s.db.Query("SELECT * FROM contacts ORDER BY Id")
-	defer rows.Close()
+func (s *service) GetContacts(
+	search string,
+	matchAll bool,
+	page int,
+) (
+	contacts []models.Contact,
+	count int,
+	err error,
+) {
+	terms := strings.FieldsFunc(search, func(r rune) bool {
+		return r == ' ' || r == ','
+	})
 
+	operator := "&&"
+	if matchAll {
+		operator = "@>"
+	}
+
+	baseQuery := `
+		SELECT id, name, linkedinurl, credlyurl, tags, contact
+		FROM contacts
+	`
+
+	limitQuery := fmt.Sprintf(" LIMIT %d OFFSET %d", PAGE_SIZE, page*PAGE_SIZE)
+
+	var rows *sql.Rows
+	if len(terms) == 0 {
+		rows, err = s.db.Query(baseQuery + limitQuery)
+	} else {
+		filterQuery := fmt.Sprintf("%s WHERE tags %s $1", baseQuery, operator)
+		rows, err = s.db.Query(filterQuery+limitQuery, pq.Array(terms))
+	}
+	defer rows.Close()
 	if err != nil {
 		return
 	}
 
 	for rows.Next() {
-		var id int
-		var name string
-		var linkedIn string
-		var credly string
-		var dateCreated time.Time
-		var dateUpdated time.Time
+		var c models.Contact
 		var tags pq.StringArray
 		var contact sql.NullString
 
-		err = rows.Scan(&id, &name, &linkedIn, &credly, &dateCreated, &dateUpdated, &tags, &contact)
-
+		err = rows.Scan(&c.Id, &c.Name, &c.LinkedIn, &c.Credly, &tags, &contact)
 		if err != nil {
 			return
 		}
 
-		contacts = append(contacts, models.Contact{
-			Id:          id,
-			Name:        name,
-			LinkedIn:    linkedIn,
-			Credly:      credly,
-			DateCreated: dateCreated,
-			DateUpdated: dateUpdated,
-			Tags:        tags,
-			Contact:     contact.String,
-		})
+		c.Tags = tags
+		c.Contact = contact.String
+		contacts = append(contacts, c)
 	}
 
-	return contacts, nil
+	countQuery := "SELECT COUNT(*) FROM contacts"
+	if len(terms) > 0 {
+		countQuery += fmt.Sprintf(" WHERE tags %s $1", operator)
+		err = s.db.QueryRow(countQuery, pq.Array(terms)).Scan(&count)
+	} else {
+		err = s.db.QueryRow(countQuery).Scan(&count)
+	}
+
+	return
 }
 
 func (s *service) CreateContact(contact models.Contact) (models.Contact, error) {
 	query := `
 		INSERT INTO contacts (name, linkedinurl, credlyurl, datecreated, dateupdated, tags, contact)
-		VALUES($1, $2, $3, $4, $5, $6, $7)
+		VALUES($1, $2, $3, $4, NOW(), NOW(), $5)
 		RETURNING id, name, linkedinurl, credlyurl, datecreated, dateupdated, tags, contact
 	`
 
 	var createdContact models.Contact
-	err := s.db.QueryRow(query, contact.Name, contact.LinkedIn, contact.Credly, contact.DateCreated, contact.DateUpdated, contact.Tags, contact.Contact).
-		Scan(&createdContact.Id, &createdContact.Name, &createdContact.LinkedIn, &createdContact.Credly, &createdContact.DateCreated, &createdContact.DateUpdated, &createdContact.Tags, &createdContact.Contact)
+	err := s.db.QueryRow(query, contact.Name, contact.LinkedIn, contact.Credly, contact.Tags, contact.Contact).
+		Scan(&createdContact.Id, &createdContact.Name, &createdContact.LinkedIn, &createdContact.Credly, &createdContact.Tags, &createdContact.Contact)
 	if err != nil {
 		return models.Contact{}, fmt.Errorf("failed to insert user: %w", err)
 	}
@@ -72,14 +96,13 @@ func (s *service) EditContact(contact models.Contact) error {
 			name = $2,
 			linkedinurl = $3,
 			credlyurl = $4,
-			datecreated = $5,
-			dateupdated = $6,
-			tags = $7,
-			contact = $8
+			dateupdated = NOW(),
+			tags = $5,
+			contact = $6
 		WHERE id = $1
 		`
 
-	res, err := s.db.Exec(query, contact.Id, contact.Name, contact.LinkedIn, contact.Credly, contact.DateCreated, contact.DateUpdated, contact.Tags, contact.Contact)
+	res, err := s.db.Exec(query, contact.Id, contact.Name, contact.LinkedIn, contact.Credly, contact.Tags, contact.Contact)
 	if err != nil {
 		return fmt.Errorf("failed to update contact: %w", err)
 	}

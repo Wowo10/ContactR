@@ -19,14 +19,15 @@
         getUsers();
     });
 
-    const getUsers = async () => {
+    const getUsers = async (page: number = 0) => {
         try {
-            const res = await fetch("/api/users", {
+            const res = await fetch("/api/users?page=" + page, {
                 credentials: "include",
             });
 
             if (res.ok) {
-                users = await res.json();
+                const response = await res.json();
+                users = response.users;
             } else {
                 users = [];
             }
@@ -139,10 +140,7 @@
                 </td>
                 <td>
                     {#if user.edit}
-                        <input
-                            type="text"
-                            bind:value={user.valid_until}
-                        />
+                        <input type="text" bind:value={user.valid_until} />
                     {:else}
                         {user.valid_until}
                     {/if}

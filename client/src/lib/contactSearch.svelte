@@ -8,14 +8,30 @@
     type ContactWithEdit = Contact & { edit: boolean };
     let contacts: ContactWithEdit[] = [];
 
-    const getUsers = async () => {
+    let search = "";
+    let all = false;
+
+    const getUsers = async (
+        search: string = "",
+        all: boolean = false,
+        page: number = 0,
+    ) => {
         try {
-            const res = await fetch("/api/contacts", {
-                credentials: "include",
-            });
+            const res = await fetch(
+                "/api/contacts?search=" +
+                    search +
+                    "&matchAll=" +
+                    all +
+                    "&page=" +
+                    page,
+                {
+                    credentials: "include",
+                },
+            );
 
             if (res.ok) {
-                contacts = await res.json();
+                const response = await res.json();
+                contacts = response.contacts;
             } else {
                 contacts = [];
             }
@@ -27,8 +43,9 @@
 </script>
 
 <div>
-    <input type="text" placeholder="Search" />
-    <label><input type="checkbox" />all</label>
+    <input type="text" placeholder="Search" bind:value={search} />
+    <label><input type="checkbox" bind:checked={all} />all</label>
+    <button on:click={() => getUsers(search, all)}>Search</button>
     <!-- make nice style toggle all/any-->
 </div>
 
