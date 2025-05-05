@@ -98,7 +98,7 @@ func (s *Server) AuthMiddleware(next http.Handler) http.Handler {
 		session, _ := s.sessionStore.Get(r, "auth-session")
 
 		cachedAt, _ := session.Values["cached_at"].(time.Time)
-		email, _ := session.Values["cached_at"].(string)
+		email, _ := session.Values["user_email"].(string)
 
 		if time.Since(cachedAt) > REFRESH_POLL_INTERVAL*time.Minute {
 			dbService := database.New()
