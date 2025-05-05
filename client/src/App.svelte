@@ -2,21 +2,21 @@
   import Login from "./lib/login.svelte";
   import Router from "./lib/router.svelte";
 
-  import type { User } from "./lib/models/user";
+  import type { LoginData } from "./lib/models/user";
 
-  let user: User | null = null;
+  let logged: LoginData | null = null;
 </script>
 
 <main>
   <div>super Logo</div>
 
-  <Login bind:user />
+  <Login bind:user={logged} />
 
-  {JSON.stringify(user)}
+  {JSON.stringify(logged)}
 
-  {#if user}
-    {#if user.is_valid}
-      <Router {user} />
+  {#if logged}
+    {#if logged.is_valid}
+      <Router {logged} />
     {:else}
       <p>Access denied</p>
     {/if}

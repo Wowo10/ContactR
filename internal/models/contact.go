@@ -8,7 +8,7 @@ type Contact struct {
 	Contact     string    `json:"contact"`
 	DateCreated time.Time `json:"dateCreated"`
 	DateUpdated time.Time `json:"dateUpdated"`
-	Tags        []string  `json:"is_valid"`
+	Tags        []string  `json:"tags"`
 	LinkedIn    string    `json:"linkedInUrl"`
 	Credly      string    `json:"credlyInUrl"`
 }

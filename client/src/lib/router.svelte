@@ -1,9 +1,9 @@
 <script lang="ts">
     import Search from "./search.svelte";
     import UsersControl from "./usersControl.svelte";
-    import type { User } from "./models/user";
+    import type { LoginData } from "./models/user";
 
-    export let user: User | null = null;
+    export let logged: LoginData | null = null;
 
     let route = "search";
 
@@ -20,7 +20,7 @@
     }
 </script>
 
-{#if user?.is_admin}
+{#if logged?.is_admin}
     <nav>
         <button
             on:click={() => navigate("search")}

@@ -2,8 +2,11 @@ package database
 
 import (
 	"Contacter/internal/models"
+	"database/sql"
 	"fmt"
 	"time"
+
+	"github.com/lib/pq"
 )
 
 func (s *service) GetContacts() (contacts []models.Contact, err error) {
@@ -21,8 +24,8 @@ func (s *service) GetContacts() (contacts []models.Contact, err error) {
 		var credly string
 		var dateCreated time.Time
 		var dateUpdated time.Time
-		var tags []string
-		var contact string
+		var tags pq.StringArray
+		var contact sql.NullString
 
 		err = rows.Scan(&id, &name, &linkedIn, &credly, &dateCreated, &dateUpdated, &tags, &contact)
 
@@ -38,7 +41,7 @@ func (s *service) GetContacts() (contacts []models.Contact, err error) {
 			DateCreated: dateCreated,
 			DateUpdated: dateUpdated,
 			Tags:        tags,
-			Contact:     contact,
+			Contact:     contact.String,
 		})
 	}
 
