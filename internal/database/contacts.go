@@ -41,10 +41,11 @@ func (s *service) GetContacts(
 		filterQuery := fmt.Sprintf("%s WHERE tags %s $1", baseQuery, operator)
 		rows, err = s.db.Query(filterQuery+limitQuery, pq.Array(terms))
 	}
-	defer rows.Close()
+
 	if err != nil {
 		return
 	}
+	defer rows.Close()
 
 	for rows.Next() {
 		var c models.Contact

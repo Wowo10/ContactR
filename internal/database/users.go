@@ -8,11 +8,11 @@ import (
 
 func (s *service) CheckUser(email string) (isValid bool, isAdmin bool, err error) {
 	rows, err := s.db.Query("SELECT * FROM users WHERE email = $1", email)
-	defer rows.Close()
 
 	if err != nil {
 		return
 	}
+	defer rows.Close()
 
 	if rows.Next() {
 		var id int
@@ -44,11 +44,10 @@ func (s *service) GetUsers(page int) (users []models.User, count int, err error)
 		LIMIT $1 OFFSET $2
 	`, PAGE_SIZE, page*PAGE_SIZE)
 
-	defer rows.Close()
-
 	if err != nil {
 		return
 	}
+	defer rows.Close()
 
 	for rows.Next() {
 		var id int

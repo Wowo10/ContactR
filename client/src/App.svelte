@@ -8,7 +8,7 @@
 </script>
 
 <main>
-  <div>super Logo</div>
+  <div><img src="src/assets/logo.gif" alt="logo" /></div>
 
   <Login bind:user={logged} />
 
