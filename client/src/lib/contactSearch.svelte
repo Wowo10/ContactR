@@ -43,6 +43,11 @@
             contacts = [];
         }
     };
+
+    const goToDetails = (id: number) => {
+        window.history.pushState(null, "", "/contact/" + id);
+        window.location.href = "/contact/" + id;
+    };
 </script>
 
 <div>
@@ -65,7 +70,7 @@
     </thead>
     <tbody>
         {#each contacts as contact}
-            <tr>
+            <tr on:click|preventDefault={() => goToDetails(contact.id)}>
                 <td>{contact.id}</td>
                 <td>{contact.name}</td>
                 <td>{contact.linkedInUrl}</td>
@@ -83,3 +88,10 @@
         {/each}
     </div>
 {/if}
+
+<style>
+    table tr:hover {
+        cursor: pointer;
+        background-color: #ddd;
+    }
+</style>
