@@ -32,14 +32,14 @@ func (s *service) GetContacts(
 		FROM contacts
 	`
 
-	limitQuery := fmt.Sprintf(" LIMIT %d OFFSET %d", PAGE_SIZE, page*PAGE_SIZE)
+	orderLimitQuery := fmt.Sprintf(" ORDER BY ID LIMIT %d OFFSET %d", PAGE_SIZE, page*PAGE_SIZE)
 
 	var rows *sql.Rows
 	if len(terms) == 0 {
-		rows, err = s.db.Query(baseQuery + limitQuery)
+		rows, err = s.db.Query(baseQuery + orderLimitQuery)
 	} else {
-		filterQuery := fmt.Sprintf("%s WHERE tags %s $1", baseQuery, operator)
-		rows, err = s.db.Query(filterQuery+limitQuery, pq.Array(terms))
+		filterQuery := fmt.Sprintf("%s WHERE tags %s $1 %s", baseQuery, operator, orderLimitQuery)
+		rows, err = s.db.Query(filterQuery, pq.Array(terms))
 	}
 
 	if err != nil {
@@ -81,11 +81,15 @@ func (s *service) GetContact(id string) (contact models.Contact, err error) {
 	`
 
 	var tags pq.StringArray
+	var contactStr sql.NullString
 	err = s.db.QueryRow(query, id).
 		Scan(&contact.Id, &contact.Name, &contact.LinkedIn, &contact.Credly,
-			&contact.DateCreated, &contact.DateUpdated, &tags, &contact.Contact)
+			&contact.DateCreated, &contact.DateUpdated, &tags, &contactStr)
 
 	contact.Tags = tags
+	if contactStr.Valid {
+		contact.Contact = contactStr.String
+	}
 
 	return
 }
