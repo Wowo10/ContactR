@@ -40,6 +40,7 @@ func (s *Server) RegisterRoutes() http.Handler {
 		api.Delete("/users/{id}", s.deleteUsersHandler)
 
 		api.Get("/contacts", s.getContactsHandler)
+		api.Get("/contacts/{id}", s.getSingleContactHandler)
 		api.Put("/contacts", s.putContactsHandler)
 		api.Post("/contacts", s.postContactsHandler)
 		api.Delete("/contacts/{id}", s.deleteContactsHandler)

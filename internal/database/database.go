@@ -26,6 +26,7 @@ type Service interface {
 	DeleteUser(id string) (err error)
 
 	GetContacts(search string, matchAll bool, page int) (contacts []models.Contact, count int, err error)
+	GetContact(id string) (contact models.Contact, err error)
 	CreateContact(contact models.Contact) (models.Contact, error)
 	EditContact(contact models.Contact) (err error)
 	DeleteContact(id string) (err error)

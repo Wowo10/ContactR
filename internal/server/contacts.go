@@ -40,6 +40,17 @@ func (s *Server) getContactsHandler(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(resp)
 }
 
+func (s *Server) getSingleContactHandler(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+	contact, err := s.db.GetContact(id)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	json.NewEncoder(w).Encode(contact)
+}
+
 func (s *Server) putContactsHandler(w http.ResponseWriter, r *http.Request) {
 	var contact models.Contact
 	err := json.NewDecoder(r.Body).Decode(&contact)

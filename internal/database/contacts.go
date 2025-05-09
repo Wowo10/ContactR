@@ -73,19 +73,41 @@ func (s *service) GetContacts(
 	return
 }
 
+func (s *service) GetContact(id string) (contact models.Contact, err error) {
+	query := `
+		SELECT *
+		FROM contacts
+		WHERE id = $1
+	`
+
+	var tags pq.StringArray
+	err = s.db.QueryRow(query, id).
+		Scan(&contact.Id, &contact.Name, &contact.LinkedIn, &contact.Credly,
+			&contact.DateCreated, &contact.DateUpdated, &tags, &contact.Contact)
+
+	contact.Tags = tags
+
+	return
+}
+
 func (s *service) CreateContact(contact models.Contact) (models.Contact, error) {
 	query := `
 		INSERT INTO contacts (name, linkedinurl, credlyurl, datecreated, dateupdated, tags, contact)
-		VALUES($1, $2, $3, $4, NOW(), NOW(), $5)
+		VALUES($1, $2, $3, NOW(), NOW(),$4, $5)
 		RETURNING id, name, linkedinurl, credlyurl, datecreated, dateupdated, tags, contact
 	`
 
 	var createdContact models.Contact
+	var tags pq.StringArray
+
 	err := s.db.QueryRow(query, contact.Name, contact.LinkedIn, contact.Credly, contact.Tags, contact.Contact).
-		Scan(&createdContact.Id, &createdContact.Name, &createdContact.LinkedIn, &createdContact.Credly, &createdContact.Tags, &createdContact.Contact)
+		Scan(&createdContact.Id, &createdContact.Name, &createdContact.LinkedIn, &createdContact.Credly,
+			&createdContact.DateCreated, &createdContact.DateUpdated, &tags, &createdContact.Contact)
 	if err != nil {
 		return models.Contact{}, fmt.Errorf("failed to insert user: %w", err)
 	}
+
+	createdContact.Tags = tags
 
 	return createdContact, nil
 }
